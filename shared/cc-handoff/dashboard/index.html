@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Handoff</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#f4f4f7;--card:#fff;--col:#e8e8ee;--border:#d4d4dc;--text:#1a1a2e;--t2:#88889a;--amber:#d97706;--green:#059669;--red:#dc2626;--radius:10px;--shadow:0 1px 2px rgba(0,0,0,0.05)}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);width:100%;height:100vh;overflow:hidden;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+.hd{padding:12px 16px 4px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.hd h1{font-size:14px;font-weight:650;display:flex;align-items:center;gap:8px}
+.hd h1::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--amber)}
+.hd .tm{font-size:11px;color:var(--t2)}
+.sb{padding:4px 16px 10px;display:flex;gap:16px;font-size:11px;color:var(--t2);flex-shrink:0;border-bottom:1px solid var(--border);margin:0 16px}
+.sb>span{display:flex;align-items:center;gap:4px}
+.dt{width:6px;height:6px;border-radius:50%;display:inline-block}
+.dt.alive{background:var(--green)}.dt.busy{background:var(--amber)}.dt.offline{background:var(--red)}.dt.unknown{background:var(--t2)}
+.sl{font-weight:500;color:var(--text)}
+.qb{margin-left:auto;background:var(--amber);color:#fff;font-size:10px;font-weight:600;padding:1px 7px;border-radius:7px;line-height:15px}
+
+/* Horizontal scroll */
+.bd{flex:1;overflow-x:auto;overflow-y:hidden;padding:10px 16px 16px;display:flex;gap:12px}
+.bd::-webkit-scrollbar{height:4px}
+.bd::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+.col{flex:0 0 280px;border-radius:var(--radius);display:flex;flex-direction:column;max-height:100%}
+.col-hd{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px;flex-shrink:0;border-radius:var(--radius) var(--radius) 0 0}
+.col-hd .ct2{font-size:10px;font-weight:500;padding:0 7px;border-radius:6px;line-height:16px}
+.col-bd{flex:1;overflow-y:auto;padding:6px 8px 8px;display:flex;flex-direction:column;gap:4px;border-radius:0 0 var(--radius) var(--radius);min-height:32px}
+.col-bd::-webkit-scrollbar{width:3px}
+.col-bd::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+#q .col-hd{background:#e8e8ee;color:#55556a}
+#q .col-hd .ct2{background:#d4d4dc;color:#55556a}
+#q .col-bd{background:#f0f0f4}
+#p .col-hd{background:#fef3c7;color:#92400e}
+#p .col-hd .ct2{background:#fde68a;color:#92400e}
+#p .col-bd{background:#fffbeb}
+#d .col-hd{background:#d1fae5;color:#065f46}
+#d .col-hd .ct2{background:#a7f3d0;color:#065f46}
+#d .col-bd{background:#ecfdf5}
+
+/* Card */
+.cd{background:var(--card);border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-size:11.5px;cursor:pointer;box-shadow:var(--shadow);transition:border-color 0.15s ease,transform 0.15s ease}
+.cd:hover{border-color:#b0b0c0;transform:translateY(-1px)}
+.cd.p0{border-left:3px solid var(--red)}
+.cd.p1{border-left:3px solid var(--amber)}
+.cd.p2{border-left:3px solid #8b5cf6}
+.cd .nm{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cd .tm{font-size:10.5px;color:var(--t2);margin-top:2px}
+.cd .desc{font-size:11px;color:var(--t2);margin-top:4px;display:none;line-height:1.4;word-break:break-all}
+.cd.open .desc{display:block;-webkit-animation:zoomin 0.2s ease}
+@-webkit-keyframes zoomin{0%{opacity:0;transform:scale(0.95)}100%{opacity:1;transform:scale(1)}}
+.emp{padding:6px 0;color:var(--t2);font-size:11px;text-align:center}
+.by{font-size:9px;background:#e8e8ee;color:#555;border-radius:4px;padding:0 5px;line-height:15px;margin-left:4px;white-space:nowrap}
+.tk{font-size:10px;color:var(--amber);font-weight:500;margin-left:4px;white-space:nowrap}
+.tk-note{font-size:10px;color:var(--t2);}
+
+.sec{margin-bottom:12px}
+.st{font-size:11px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.bdg{font-size:10px;background:var(--col);color:var(--t2);border-radius:6px;padding:0 6px;line-height:15px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:7px;padding:8px 10px;margin-bottom:4px;font-size:12px;display:flex;justify-content:space-between;align-items:center;box-shadow:var(--shadow)}
+.card.p0{border-left:3px solid var(--red)}
+.card.p1{border-left:3px solid var(--amber)}
+.card.p2{border-left:3px solid #8b5cf6}
+.card .nm{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card .tm{font-size:10.5px;color:var(--t2);margin-top:2px}
+
+</style>
+</head>
+<body>
+<div class="hd"><h1>Handoff</h1><span class="tm" id="clk">{{NOW}}</span></div>
+<div class="sb">
+  <span><span class="dt {{OC_STAT}}"></span><span class="sl">OC</span><span id="oc-lb">{{OC_STAT}}</span></span>
+  <span><span class="dt {{CC_STAT}}"></span><span class="sl">CC</span><span id="cc-lb">{{CC_STAT}}</span></span>
+  <span class="qb" id="qbadge">0</span>
+</div>
+<div class="bd" id="bd"><div class="col q" id="q"></div><div class="col p" id="p"></div><div class="col d" id="d"></div></div>
+
+<script src="app.js"></script></body>
+</html>
