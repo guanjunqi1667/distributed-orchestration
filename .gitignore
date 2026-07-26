@@ -1,0 +1,63 @@
+# Sensitive files - never commit
+.env
+*.key
+*.pem
+credentials/
+secrets/
+
+# OS / Editor junk
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Dependencies
+node_modules/
+__pycache__/
+
+# Build outputs
+dist/
+build/
+target/
+
+# Temporary files
+tmp/
+temp/
+.cache/
+
+# Backup files
+*.backup*
+*.bak
+*.orig
+
+# OpenClaw / workspace runtime state
+.openclaw/workspace-state.json
+guest/.openclaw/workspace-state.json
+.handoff-latest.txt
+.work-handoff-state.txt
+.pending-items.tmp
+.sync-queue.sqlite
+.webchat-sync-state.json
+.whatsapp-sync-state.json
+.state/
+.whatsapp-poll-state.json
+
+# Broken / runtime artifacts
+*.broken
+*.sqlite
+*.db.broken
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Project logs / local runtime outputs
+projects/**/logs/
+projects/**/server.log

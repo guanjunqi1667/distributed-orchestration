@@ -1,0 +1,26 @@
+# Runtime state (the message board, not code — never commit)
+# Dir-level rules: cover all heartbeats, locks, flags, and node registrations.
+INBOX/
+INBOX_ARCHIVE/
+IN_PROGRESS/
+DONE/
+ALERT/
+STATE/
+# SQLite authority store (dual/db modes)
+handoff.db
+handoff.db-journal
+handoff.db-wal
+handoff.db-shm
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Temp/test artifacts
+E2E_TEST.txt
+.cc-done-*.md
+*.tmp
+/tmp/
+
+# Backups (keep in local, not in repo)
+BACKUP/
