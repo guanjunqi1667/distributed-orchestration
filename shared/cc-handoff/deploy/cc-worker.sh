@@ -49,12 +49,22 @@ except: print('')
 
   log "TASK: $TASK_ID | $OBJECTIVE"
 
-  # 3. 执行任务
-  # ── 代码执行点 ──
-  # 在这里插入实际执行逻辑：
-  #   - 读任务 objective 确定要做什么
-  #   - 执行相应的脚本/操作
-  #   - 记录结果
+  # 3. ✅ 安全模式：只输出任务信息，不做自动完成
+  #    如需启用自动执行，设置 AUTO_EXECUTE=true
+  AUTO_EXECUTE="${AUTO_EXECUTE:-false}"
+
+  log "TASK: $TASK_ID | $OBJECTIVE"
+  log "INFO: Worker claimed task $TASK_ID but AUTO_EXECUTE=false"
+  log "INFO: Task left in_progress. Operator should check and complete manually:"
+  log "INFO:   python3 $CLIENT get $TASK_ID"
+  log "INFO:   python3 $CLIENT done $TASK_ID /dev/stdin <<< '{\"summary\":\"...\",\"status\":\"success\"}'"
+
+  if [ "$AUTO_EXECUTE" != "true" ]; then
+    log "SAFE: Task $TASK_ID claimed but not auto-completed (AUTO_EXECUTE=false)"
+    continue
+  fi
+
+  # ── 自动执行模式（需要设置 AUTO_EXECUTE=true）──
   RESULT_STATUS="success"
   RESULT_SUMMARY="Task $TASK_ID completed"
   CHANGES="[]"
