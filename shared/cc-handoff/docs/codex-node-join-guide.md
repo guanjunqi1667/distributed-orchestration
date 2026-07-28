@@ -38,7 +38,7 @@ python3 ~/workspace/shared/cc-handoff/bin/handoff_client.py claim guanj_<name>
 ### 4. 执行任务
 认领成功后在 `~/workspace/` 下工作。模板参考：
 - Handoff V3：`projects/agent-team-orchestration/docs/handoff-protocol-v3.md`
-- 合约模板：`/home/guanj/.openclaw/workspace/contracts/`（本机，服务器上不可用时从仓库取）
+- 合约模板：`contracts/`（在服务器 `~/workspace/contracts/` 下，如未同步可从 git 仓库取）
 
 ### 5. 报告完成
 ```bash
