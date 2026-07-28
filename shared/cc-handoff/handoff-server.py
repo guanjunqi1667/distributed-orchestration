@@ -656,6 +656,15 @@ class Handler(http.server.BaseHTTPRequestHandler):
             inbox = list_md("INBOX")
             ip = list_md("IN_PROGRESS")
             done = list_md("DONE")
+            # db 模式：用 SQLite 的 updated_at 覆盖文件 mtime
+            if AUTHORITY:
+                ts_map = {}
+                for r in db_all_tasks():
+                    ts_map[r["id"] + ".md"] = r["updated_at"]
+                for lst in [inbox, ip, done]:
+                    for item in lst:
+                        if item["name"] in ts_map and ts_map[item["name"]]:
+                            item["mtime"] = ts_map[item["name"]]
             cc_st, cc_ts = read_hb(os.path.join(HD, "STATE", "cc.heartbeat"))
             oc_st, oc_ts = read_hb(os.path.join(HD, "STATE", "openclaw.heartbeat"))
             data = {"inbox": inbox, "in_progress": ip, "done": done[:10],
