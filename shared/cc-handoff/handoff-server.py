@@ -433,7 +433,17 @@ def project():
         if target_rel and status in ("pending", "claimed", "in_progress"):
             content = task_body_md(row)
         elif target_rel and status == "done":
-            content = row["done_report"] or f"# Done: {tid}\n"
+            dr = row["done_report"] or ""
+            # done_report 可能是 JSON → 解析成可读 markdown
+            try:
+                drj = json.loads(dr)
+                summary = drj.get("summary", "(no summary)")
+                changes = drj.get("changes", [])
+                content = "# Done: " + tid + "\n\n## Summary\n" + summary
+                if changes:
+                    content += "\n\n## Changes\n" + "\n".join("- " + c for c in changes)
+            except (json.JSONDecodeError, TypeError):
+                content = dr or f"# Done: {tid}\n"
         elif target_rel and status == "archived":
             content = read_file_safe(os.path.join(HD, target_rel, tid + ".md")) or task_body_md(row)
         else:
