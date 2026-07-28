@@ -77,6 +77,8 @@ def list_md(dirname):
                 if s.startswith("**Tokens**") or s.startswith("**Tokens"):
                     tokens = s.split(":", 1)[-1].strip().strip("*").strip()
                     tokens = tokens.replace("{tokens}", "").strip()
+                if s.startswith("> by:"):
+                    by_override = s.split(":", 1)[-1].strip()
                 if s.startswith("**To**"):
                     to_field = s.split(":", 1)[-1].strip().strip("*").strip()
                 if s.startswith("**From**") and not to_field:
@@ -85,9 +87,9 @@ def list_md(dirname):
                     if s.startswith(t):
                         sec[t] = i
             if dirname == "IN_PROGRESS":
-                assignee = to_field or from_field or "Claude Code"
+                assignee = by_override or to_field or from_field or "Claude Code"
             elif dirname == "DONE":
-                assignee = from_field or "Claude Code"
+                assignee = by_override or from_field or "Claude Code"
             else:
                 assignee = from_field or ""
             if assignee == "Claude Code (GLM-5.2)":
@@ -346,7 +348,11 @@ def task_body_md(row):
         "acceptance_criteria": json.loads(row["ac"] or "[]"),
         "constraints": json.loads(row["constraints"] or "[]"),
     }
-    return build_task_md(row["id"], body, row["priority"], row["created_at"], status="NEW")
+    md = build_task_md(row["id"], body, row["priority"], row["created_at"], status="NEW")
+    # 附加 node_id 到投影，让 dashboard 显示实际执行节点
+    if row.get("node_id"):
+        md += "\n> by: " + row["node_id"]
+    return md
 
 def db_claim(node_id):
     """原子认领最高优先级 pending 任务 → in_progress。服务器串行化 = 天然互斥。
@@ -433,6 +439,10 @@ def project():
         else:
             content = None  # cancelled 等无投影
         # 从所有目录清除该 id，再按需写入目标
+        # 附加 node_id 到投影文件末尾
+        by_line = "> by: " + (row["node_id"] or "unknown") if row.get("node_id") else ""
+        if content and by_line and by_line not in content:
+            content += "\n" + by_line
         for d in TASK_DIRS:
             p = os.path.join(HD, d, tid + ".md")
             if target_rel and d == target_rel:

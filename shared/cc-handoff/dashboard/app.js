@@ -2,13 +2,13 @@
 // Polls /api every 6s and incrementally updates the three board columns
 // (queue / in-progress / done) WITHOUT rebuilding existing cards, so the
 // per-6s description flicker is gone and any expanded card stays expanded.
-var H = 'http://localhost:8377';
+var H = '';   // 相对路径，自动适配当前访问地址
 var POLL_MS = 6000;
 
 // ── existing helpers (preserved verbatim) ──────────────────────────────────
 function ago(i){if(!i)return'--';var s=(Date.now()-new Date(i).getTime())/1000;return s<60?'刚刚':s<3600?Math.round(s/60)+'分':s<86400?Math.round(s/3600)+'小时':Math.round(s/86400)+'天'}
 function on(n){return n[0]=='P'&&n[1]=='0'?'p0':n[0]=='P'&&n[1]=='1'?'p1':'p2'}
-function a(n){if(!n)return'';var o='OpenClaw',c='Claude';if(n.indexOf(o)>=0)return'openclaw';if(n.indexOf(c)>=0)return'claude';return n}
+function a(n){if(!n)return'';return n}  // 直接用原始节点名
 function tc(el){el.classList.toggle('open')}
 
 // ── small render helpers ───────────────────────────────────────────────────
@@ -16,7 +16,7 @@ function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'
 // 切分 token: ~1.3M（说明文字）→ {val:'~1.3M',note:'说明文字'}
 function splitToken(tk){if(!tk)return{val:'',note:''};var m=tk.match(/^([^（(]+)[（(](.+)[）)]$/)||tk.match(/^(.+?)\s*[—–-]\s*(.+)$/);return m?{val:m[1].trim(),note:m[2].trim()}:{val:tk.trim(),note:''}}
 // 名称 + 短 token（仅数值，括号内的放入描述）
-function cardName(t,col){var s=esc(t.name.replace(/\.md$/,''));if(col==='d'){var tk=splitToken(t.tokens);if(tk.val)s+=' <span class="tk">'+esc(tk.val)+'</span>'}return s}
+function cardName(t,col){var s=esc(t.name.replace(/\.md$/,''));var tk=splitToken(t.tokens);if(tk.val)s+=' <span class="tk">'+esc(tk.val)+'</span>';return s}
 function pad(x){return(x<10?'0':'')+x}
 function clockStr(){var d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes())}
 // time row: relative time + optional assignee badge (assignee mapped via a())
