@@ -9,7 +9,7 @@
 ```
 ┌─────────────────┐     REST API      ┌──────────────────────┐
 │  OpenClaw (本机) │ ◄──────────────► │  Handoff Server      │
-│  dispatch-cc.sh  │    :8377         │  threesky:100.90.1.56│
+│  dispatch-cc.sh  │    :8377         │  threesky:<server-ip>│
 │  handoff_client  │                  │  SQLite 权威存储      │
 │  创建任务         │                  │  + 看板 (HTML/JSON)   │
 └─────────────────┘                  └──────────┬───────────┘
@@ -112,7 +112,7 @@ N passed / 0 failed
 
 | 项目 | 值 |
 |------|-----|
-| 服务器 | `threesky`（`100.90.1.56`） |
+| 服务器 | `threesky`（`<server-ip>`） |
 | 服务端口 | `8377` |
 | 存储模式 | `db`（SQLite 权威） |
 | 绑定地址 | `0.0.0.0`（接受远程连接） |
@@ -153,7 +153,7 @@ bash handoff-server-start.sh --status     # 状态
 bash handoff-server-start.sh --stop       # 停止
 
 # 客户端
-export HANDOFF_SERVER=http://100.90.1.56:8377
+export HANDOFF_SERVER=$HANDOFF_SERVER
 python3 ~/handoff-server/handoff_client.py pending
 python3 ~/handoff-server/handoff_client.py claim <node-id>
 python3 ~/handoff-server/handoff_client.py get <task-id>
@@ -184,7 +184,7 @@ python3 ~/handoff-server/handoff_client.py done <task-id> /dev/stdin <<< '{"summ
 ### 环境变量
 
 ```bash
-export HANDOFF_SERVER=http://100.90.1.56:8377
+export HANDOFF_SERVER=$HANDOFF_SERVER
 export HANDOFF_NODE_ID=<你的名字>_cc
 # 推荐加到 ~/.bashrc
 ```
@@ -212,7 +212,7 @@ done
 
 ### 看板
 
-浏览器打开 `http://100.90.1.56:8377`
+浏览器打开 `$HANDOFF_SERVER`
 
 ---
 

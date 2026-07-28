@@ -61,3 +61,6 @@ __pycache__/
 # Project logs / local runtime outputs
 projects/**/logs/
 projects/**/server.log
+
+# Archived handoff tasks (may contain internal paths)
+shared/cc-handoff/INBOX_ARCHIVE/*.md

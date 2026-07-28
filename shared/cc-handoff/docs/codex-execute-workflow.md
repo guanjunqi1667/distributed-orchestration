@@ -12,7 +12,7 @@
 
 ```bash
 # 1a. 测试 Handoff Server 连通
-curl -s http://100.90.1.56:8377/api | python3 -c "
+curl -s $HANDOFF_SERVER/api | python3 -c "
 import sys, json
 d = json.load(sys.stdin)
 print('inbox=%d in_progress=%d done=%d' % (len(d['inbox']), len(d['in_progress']), len(d['done'])))
@@ -23,7 +23,7 @@ print('Store:', d.get('store'))
 
 ```bash
 # 1b. 测试客户端
-export HANDOFF_SERVER=http://100.90.1.56:8377
+export HANDOFF_SERVER=$HANDOFF_SERVER
 python3 ~/workspace/shared/cc-handoff/bin/handoff_client.py pending
 ```
 预期输出：`{"pending": [...], "count": N, "store": "db"}`
@@ -31,7 +31,7 @@ python3 ~/workspace/shared/cc-handoff/bin/handoff_client.py pending
 ## Step 2：认领任务
 
 ```bash
-export HANDOFF_SERVER=http://100.90.1.56:8377
+export HANDOFF_SERVER=$HANDOFF_SERVER
 export HANDOFF_NODE_ID=你的名字_cc
 
 python3 ~/workspace/shared/cc-handoff/bin/handoff_client.py claim $HANDOFF_NODE_ID
@@ -112,7 +112,7 @@ while true:
 ## 遇到问题
 
 ### 队列为空
-→ 等管理员派新任务，或检查 `http://100.90.1.56:8377` 看板
+→ 等管理员派新任务，或检查 `$HANDOFF_SERVER` 看板
 
 ### Claim 失败（非空队列）
 → 任务可能已被其他节点先认领。等下一轮。
@@ -124,7 +124,7 @@ while true:
 
 ```bash
 # 1. 设环境
-export HANDOFF_SERVER=http://100.90.1.56:8377
+export HANDOFF_SERVER=$HANDOFF_SERVER
 export HANDOFF_NODE_ID=你的名字_$(whoami)
 
 # 2. 认领

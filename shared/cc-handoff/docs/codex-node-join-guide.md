@@ -5,7 +5,7 @@
 ### 0. 前提
 - SSH 到服务器（用自己的账号）
 - 服务器上已有 `~/workspace/`（含项目文件、模板、specs）
-- Handoff Server 已在运行（`http://100.90.1.56:8377`）
+- Handoff Server 已在运行（`$HANDOFF_SERVER`）
 
 ### 1. 分配节点 ID
 找管理员拿一个节点 ID，例如 `<你的名字>_cc`。
@@ -13,7 +13,7 @@
 
 同时设置环境变量：
 ```bash
-export HANDOFF_SERVER=http://100.90.1.56:8377
+export HANDOFF_SERVER=$HANDOFF_SERVER
 export HANDOFF_NODE_ID=<你的名字>_cc
 ```
 建议加到 `~/.bashrc` 或启动脚本。
@@ -24,7 +24,7 @@ export HANDOFF_NODE_ID=<你的名字>_cc
 python3 ~/workspace/shared/cc-handoff/bin/handoff_client.py pending
 
 # 看板
-curl http://100.90.1.56:8377/
+curl $HANDOFF_SERVER/
 ```
 
 ### 3. 测试认领
@@ -60,7 +60,7 @@ EOF
 ```
 
 ## 看板
-浏览器打开 `http://100.90.1.56:8377` 看队列状态和节点活跃情况。
+浏览器打开 `$HANDOFF_SERVER` 看队列状态和节点活跃情况。
 
 ## 注意
 - 节点 ID 全局唯一，不要抢别人的

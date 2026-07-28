@@ -6,7 +6,7 @@
 # ─────────────────────────────────────────────────────────────
 set -euo pipefail
 
-export HANDOFF_SERVER="http://100.90.1.56:8377"
+export HANDOFF_SERVER="${HANDOFF_SERVER:-http://127.0.0.1:8377}"
 export HANDOFF_NODE_ID="${HANDOFF_NODE_ID:-guanj_threesky}"
 CLIENT="$HOME/handoff-server/handoff_client.py"
 POLL_INTERVAL="${POLL_INTERVAL:-15}"
