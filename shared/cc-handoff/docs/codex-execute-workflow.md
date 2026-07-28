@@ -32,7 +32,7 @@ python3 ~/workspace/shared/cc-handoff/bin/handoff_client.py pending
 
 ```bash
 export HANDOFF_SERVER=http://100.90.1.56:8377
-export HANDOFF_NODE_ID=cc-你的节点名
+export HANDOFF_NODE_ID=guanj_<你的名字>
 
 python3 ~/workspace/shared/cc-handoff/bin/handoff_client.py claim $HANDOFF_NODE_ID
 ```
@@ -125,7 +125,7 @@ while true:
 ```bash
 # 1. 设环境
 export HANDOFF_SERVER=http://100.90.1.56:8377
-export HANDOFF_NODE_ID=cc-$(whoami)
+export HANDOFF_NODE_ID=guanj_$(whoami)
 
 # 2. 认领
 TASK_JSON=$(python3 ~/workspace/shared/cc-handoff/bin/handoff_client.py claim $HANDOFF_NODE_ID)

@@ -185,7 +185,7 @@ ssh guan@100.90.1.56
 
 ```bash
 export HANDOFF_SERVER=http://100.90.1.56:8377
-export HANDOFF_NODE_ID=cc-你的名字
+export HANDOFF_NODE_ID=guanj_<你的名字>
 # 推荐加到 ~/.bashrc
 ```
 

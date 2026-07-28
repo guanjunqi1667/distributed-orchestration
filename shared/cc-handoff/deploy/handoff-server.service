@@ -1,0 +1,35 @@
+[Unit]
+Description=Handoff Server — 多 Agent 跨节点协作任务中心
+Documentation=https://github.com/guanjunqi1667/distributed-orchestration
+After=network.target
+
+[Service]
+Type=simple
+User=handoff
+Group=handoff
+WorkingDirectory=/opt/handoff
+
+# 存储模式：db = SQLite 权威（适合分布式）
+Environment=HANDOFF_STORE=db
+Environment=HANDOFF_DIR=/opt/handoff/data
+Environment=PORT=8377
+
+# 绑定 0.0.0.0 接受远程连接
+ExecStart=/usr/bin/python3 /opt/handoff/handoff-server.py
+
+# 安全
+NoNewPrivileges=true
+PrivateTmp=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+
+# 日志
+StandardOutput=journal
+StandardError=journal
+
+# 重启策略
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

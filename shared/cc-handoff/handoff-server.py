@@ -560,7 +560,7 @@ def handle_claim(self):
                                      "hint": "files 模式由 CC 本地 mv 认领"})
     body, _ = read_body(self)
     body = body or {}
-    node_id = (body.get("node_id") or os.environ.get("HANDOFF_NODE_ID") or "node-local").strip()
+    node_id = (body.get("node_id") or os.environ.get("HANDOFF_NODE_ID") or "guanj_node").strip()
     winner = db_claim(node_id)
     if not winner:
         return send_json(self, 200, {"claimed": None, "task": None, "node_id": node_id})
