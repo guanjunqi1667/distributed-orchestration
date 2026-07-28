@@ -61,7 +61,7 @@ def main():
         return 2
     cmd, rest = argv[0], argv[1:]
     if cmd == "claim":
-        node = rest[0] if rest else os.environ.get("HANDOFF_NODE_ID", "node-local")
+        node = rest[0] if rest else os.environ.get("HANDOFF_NODE_ID", "guanj_node")
         code, j = req("POST", "/api/claim", {"node_id": node})
         return emit(code, j)
     if cmd == "done":

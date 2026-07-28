@@ -23,7 +23,7 @@
 | 项目 | 值 |
 |------|-----|
 | Handoff Server 地址 | `http://100.90.1.56:8377` |
-| 本节点 ID | `cc-threesky`（在环境变量 `HANDOFF_NODE_ID` 中设置）|
+| 本节点 ID | `guanj_threesky`（在环境变量 `HANDOFF_NODE_ID` 中设置）|
 | 客户端脚本 | `~/handoff-server/handoff_client.py` |
 | 存储模式 | `db`（SQLite 权威） |
 
@@ -43,7 +43,7 @@ OC 创建 → pending → claim → in_progress → done
 
 ```bash
 export HANDOFF_SERVER=http://100.90.1.56:8377
-export HANDOFF_NODE_ID=cc-threesky
+export HANDOFF_NODE_ID=guanj_threesky
 ```
 
 ### 1. 查看待处理任务
@@ -57,7 +57,7 @@ python3 ~/handoff-server/handoff_client.py pending
 ### 2. 认领任务
 
 ```bash
-python3 ~/handoff-server/handoff_client.py claim cc-threesky
+python3 ~/handoff-server/handoff_client.py claim guanj_threesky
 ```
 
 - 成功：`{"claimed": true, "task": {...}}`
@@ -95,7 +95,7 @@ EOF
 #!/usr/bin/env bash
 # ── cc-worker.sh — 远端 CC 轮询执行任务 ──
 export HANDOFF_SERVER=http://100.90.1.56:8377
-export HANDOFF_NODE_ID=cc-threesky
+export HANDOFF_NODE_ID=guanj_threesky
 CLIENT=~/handoff-server/handoff_client.py
 
 while true; do

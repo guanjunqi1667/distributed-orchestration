@@ -221,7 +221,7 @@ def gen_task_id(priority, body):
     tid = str(body.get("id") or "").strip()
     if tid:
         return tid
-    node = slugify(str(body.get("node") or os.environ.get("HANDOFF_NODE", "cc-main")), maxlen=16)
+    node = slugify(str(body.get("node") or os.environ.get("HANDOFF_NODE", "guanj_cc")), maxlen=16)
     slug = slugify(body.get("title") or body.get("objective") or "task")
     return f"{priority}-{today_str()}-{node}-{slug}"
 
@@ -235,8 +235,8 @@ def build_task_md(tid, body, priority, created):
         acs = [acs]
     if isinstance(constraints, str):
         constraints = [constraints]
-    node = str(body.get("node") or os.environ.get("HANDOFF_NODE", "cc-main")).strip()
-    created_by = str(body.get("created_by") or os.environ.get("HANDOFF_NODE", "oc-main")).strip()
+    node = str(body.get("node") or os.environ.get("HANDOFF_NODE", "guanj_cc")).strip()
+    created_by = str(body.get("created_by") or os.environ.get("HANDOFF_NODE", "guanj_oc")).strip()
     fm = ["---",
           f"id: {tid}",
           f"priority: {priority}",

@@ -13,7 +13,7 @@ set -uo pipefail
 WS="$HOME/.openclaw/workspace"
 HB="$WS/shared/cc-handoff/STATE/cc.heartbeat"
 WORKING="${1:-}"
-SESSION="${CC_SESSION:-cc-main}"
+SESSION="${CC_SESSION:-guanj_cc}"
 TMP="$HB.tmp.$$"
 
 printf '{"status":"alive","working_on":"%s","last_seen":"%s","session":"%s"}\n' \

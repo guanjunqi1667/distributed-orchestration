@@ -2,12 +2,12 @@
 id: {task-id}                     # {PRIORITY}-{DATE}-{NODE}-{SLUG}
 priority: P0                       # P0|P1|P2  (P0=立即 P1=当次会话 P2=有空)
 status: pending                    # pending|in_progress|done|blocked|alert
-created_by: oc-main
+created_by: guanj_oc
 created_at: {YYYY-MM-DDTHH:mm+TZ}
 claimed_by:                        # 认领节点填（claim-task.sh 自动写入）
 claimed_at:
 done_at:
-node: cc-main                      # 执行节点；多节点扩展时按 STATE/nodes/ 注册
+node: guanj_cc                      # 执行节点；多节点扩展时按 STATE/nodes/ 注册
 ---
 
 # Task: {task-id}

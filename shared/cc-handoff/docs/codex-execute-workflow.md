@@ -4,7 +4,7 @@
 
 - SSH 访问：`ssh guan@100.90.1.56`
 - Python 3（服务器已装 3.14.4）
-- 管理员已分配节点 ID（如 `cc-cooper`）
+- 管理员已分配节点 ID（如 `guanj_<name>`）
 
 ---
 

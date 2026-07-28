@@ -167,7 +167,7 @@ python3 ~/handoff-server/handoff_client.py done <task-id> /dev/stdin <<< '{"summ
 ### 新节点流程
 
 ```
-1. 分配节点 ID（如 cc-cooper）         ← 管理员
+1. 分配节点 ID（如 guanj_<name>）         ← 管理员
 2. SSH 到服务器                         ← 节点自己
 3. 设环境变量                           ← 节点自己
 4. 验证连通（pending + 看板）           ← 节点自己

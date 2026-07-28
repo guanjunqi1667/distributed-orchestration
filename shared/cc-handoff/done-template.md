@@ -2,12 +2,12 @@
 id: {task-id}
 priority: P0
 status: done
-created_by: oc-main
+created_by: guanj_oc
 created_at: {YYYY-MM-DDTHH:mm+TZ}
-claimed_by: cc-main
+claimed_by: guanj_cc
 claimed_at: {YYYY-MM-DDTHH:mm+TZ}
 done_at: {YYYY-MM-DDTHH:mm+TZ}
-node: cc-main
+node: guanj_cc
 ---
 
 # Done: {task-id}

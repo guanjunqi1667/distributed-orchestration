@@ -15,7 +15,7 @@ HB="$HD/STATE/cc.heartbeat"
 CLI="$HD/bin/handoff_client.py"
 STORE="${HANDOFF_STORE:-files}"
 MAX_TURNS="${HANDOFF_MAX_TURNS:-500}"
-LOCAL_NODE="${CC_NODE:-cc-main}"        # 本节点 id（多节点路由；见 STATE/nodes/）
+LOCAL_NODE="${CC_NODE:-guanj_cc}"        # 本节点 id（多节点路由；见 STATE/nodes/）
 export CC_NODE="$LOCAL_NODE"            # 传入 spawn 的 CC，供 claim 解析 frontmatter node
 cd "$WS"
 
@@ -74,7 +74,7 @@ except Exception: print('')" 2>/dev/null)"
 完成后（关键：dual/db 模式下 DONE 由服务器单向投影，不要直接写 DONE/ 或手动 mv）：
 1. 把 DONE 报告（按 done-template：Summary / Changes / Verification / AC 逐条对照 / Issues / Next Steps）写入临时文件，例如 /tmp/done-${TID}.md；
 2. 执行 shared/cc-handoff/bin/task-done.sh ${TID} /tmp/done-${TID}.md  （写入权威 SQLite 并投影 DONE/${TID}.md）；
-3. 执行 shared/cc-handoff/bin/notify-openclaw.sh ${TID}  通知 OpenClaw 收件（写 STATE/notify.oc-main.flag，过渡期兼容写 cc.notify.flag，纯文件驱动，无 deliver）。
+3. 执行 shared/cc-handoff/bin/notify-openclaw.sh ${TID}  通知 OpenClaw 收件（写 STATE/notify.guanj_oc.flag，过渡期兼容写 cc.notify.flag，纯文件驱动，无 deliver）。
 
 不要手动 mv 任务文件、不要直接写 INBOX/IN_PROGRESS/DONE 目录（这些是服务器单向投影出来的）。无 stdin 时 task-done.sh 也可从 stdin 读报告。" --max-turns "$MAX_TURNS"
   exit 0
@@ -85,7 +85,7 @@ fi
 # ════════════════════════════════════════════════════════════════════
 if cc_busy; then
   echo "CC 已在线（alive 且新鲜），其排队排空循环会自己取走 INBOX 新任务；写 wake flag 不重复 spawn。"
-  TARGET_NODE="${CC_NODE:-cc-main}"
+  TARGET_NODE="${CC_NODE:-guanj_cc}"
 echo "$(date -Iseconds) wake-inbox-update" >> "$WS/shared/cc-handoff/STATE/notify.${TARGET_NODE}.flag"
 # 旧格式兼容
 echo "$(date -Iseconds) wake-inbox-update" >> "$WS/shared/cc-handoff/STATE/cc.notify.flag"

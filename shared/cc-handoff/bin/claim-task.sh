@@ -24,7 +24,7 @@ claim() {
   # 多节点：在 frontmatter 记录认领节点/时间/状态（best-effort；仅当文件带 frontmatter，
   # 旧文件无 frontmatter → 跳过，认领仍有效）。全程在锁内，文件已独占于 IN_PROGRESS/。
   if [ -f "$dst" ] && head -1 "$dst" 2>/dev/null | grep -q '^---[[:space:]]*$'; then
-    local node="${CC_NODE:-cc-main}" now
+    local node="${CC_NODE:-guanj_cc}" now
     now=$(date -Iseconds)
     sed -i "s#^claimed_by:.*#claimed_by: ${node}#; s#^claimed_at:.*#claimed_at: ${now}#; s#^status:.*#status: in_progress#" "$dst" 2>/dev/null || true
   fi
