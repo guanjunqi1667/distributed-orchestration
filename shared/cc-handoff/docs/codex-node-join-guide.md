@@ -3,7 +3,7 @@
 ## 加入流程（首次）
 
 ### 0. 前提
-- SSH 到服务器 `threesky`（`ssh guan@100.90.1.56`）
+- SSH 到服务器（用自己的账号）
 - 服务器上已有 `~/workspace/`（含项目文件、模板、specs）
 - Handoff Server 已在运行（`http://100.90.1.56:8377`）
 
