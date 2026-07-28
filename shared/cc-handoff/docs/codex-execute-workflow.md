@@ -4,7 +4,7 @@
 
 - SSH 访问：用自己的账号登录服务器后直接跑，或在本机装 `ho` 客户端
 - Python 3（服务器已装 3.14.4）
-- 管理员已分配节点 ID（如 `guanj_<name>`）
+- 管理员已分配节点 ID（如 `你的名字_cc`）
 
 ---
 
@@ -32,7 +32,7 @@ python3 ~/workspace/shared/cc-handoff/bin/handoff_client.py pending
 
 ```bash
 export HANDOFF_SERVER=http://100.90.1.56:8377
-export HANDOFF_NODE_ID=guanj_<你的名字>
+export HANDOFF_NODE_ID=你的名字_cc
 
 python3 ~/workspace/shared/cc-handoff/bin/handoff_client.py claim $HANDOFF_NODE_ID
 ```
@@ -125,7 +125,7 @@ while true:
 ```bash
 # 1. 设环境
 export HANDOFF_SERVER=http://100.90.1.56:8377
-export HANDOFF_NODE_ID=guanj_$(whoami)
+export HANDOFF_NODE_ID=你的名字_$(whoami)
 
 # 2. 认领
 TASK_JSON=$(python3 ~/workspace/shared/cc-handoff/bin/handoff_client.py claim $HANDOFF_NODE_ID)

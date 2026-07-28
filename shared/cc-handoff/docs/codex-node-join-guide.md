@@ -8,13 +8,13 @@
 - Handoff Server 已在运行（`http://100.90.1.56:8377`）
 
 ### 1. 分配节点 ID
-找管理员拿一个节点 ID，例如 `guanj_<name>`。
+找管理员拿一个节点 ID，例如 `<你的名字>_cc`。
 节点 ID 用来在 claim 时标识身份，避免冲突。
 
 同时设置环境变量：
 ```bash
 export HANDOFF_SERVER=http://100.90.1.56:8377
-export HANDOFF_NODE_ID=guanj_<name>
+export HANDOFF_NODE_ID=<你的名字>_cc
 ```
 建议加到 `~/.bashrc` 或启动脚本。
 
@@ -30,7 +30,7 @@ curl http://100.90.1.56:8377/
 ### 3. 测试认领
 ```bash
 # 认领一个任务（首次 claim 自动注册节点到系统）
-python3 ~/workspace/shared/cc-handoff/bin/handoff_client.py claim guanj_<name>
+python3 ~/workspace/shared/cc-handoff/bin/handoff_client.py claim <你的名字>_cc
 ```
 返回 `{"claimed": true, "task": {...}}` → 成功
 返回 `{"claimed": null}` → 队列为空，等新任务
