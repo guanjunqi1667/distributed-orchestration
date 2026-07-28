@@ -83,8 +83,9 @@ function renderStatus(d){
   document.getElementById('cc-lb').textContent=d.cc.status;
   document.getElementById('qbadge').textContent=d.inbox.length;
   var dots=document.querySelectorAll('.sb .dt');   // [oc, cc]
-  if(dots[0])dots[0].className='dt '+d.oc.status;
-  if(dots[1])dots[1].className='dt '+d.cc.status;
+  var m={'online':'alive','busy':'busy','offline':'offline','unknown':'unknown'};
+  if(dots[0])dots[0].className="dt "+(m[d.oc.status]||"unknown");
+  if(dots[1])dots[1].className="dt "+(m[d.cc.status]||"unknown");
   document.getElementById('clk').textContent=clockStr();
 }
 

@@ -146,8 +146,8 @@ def render():
     done_show = done[-8:][::-1]
     page = open(TPL_PATH).read()
     page = page.replace("{{NOW}}", now)
-    page = page.replace("{{OC_STAT}}", oc_st)
-    page = page.replace("{{CC_STAT}}", cc_st)
+    page = page.replace("{{OC_STAT}}", "alive" if oc_st == "online" else oc_st)
+    page = page.replace("{{CC_STAT}}", "alive" if cc_st == "online" else cc_st)
     page = page.replace("{{QCNT}}", str(len(inbox)))
     page = page.replace("{{IPCNT}}", str(len(ip)))
     page = page.replace("{{DONECNT}}", str(len(done)))
