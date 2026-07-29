@@ -1,0 +1,8 @@
+{
+  "nodes": [
+    {"id": "oc-main",       "aliases": ["guanj_oc", "openclaw"], "display": "openclaw_guanj",     "type": "openclaw",   "location": "local"},
+    {"id": "cc",            "aliases": ["guanj_cc", "cc-main"],  "display": "claudecode_guanj",   "type": "claude-code", "location": "local"},
+    {"id": "threesky",      "aliases": [],                       "display": "Threesky",           "type": "server",     "location": "remote"},
+    {"id": "codex_cherry_mac", "aliases": [],                    "display": "codex_cherry_mac",   "type": "codex",      "location": "remote"}
+  ]
+}

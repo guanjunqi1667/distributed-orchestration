@@ -21,8 +21,8 @@ in_progress 映回 IN_PROGRESS/，现有 SessionStart stale-hook（>30min→ALER
   HANDOFF_STORE, HANDOFF_DIR (默认 ~/.openclaw/workspace/shared/cc-handoff),
   HANDOFF_DB (默认 <DIR>/handoff.db), PORT (默认 8377)
 """
-import http.server, json, os, glob, re, sqlite3, tempfile
-from datetime import datetime, timedelta
+import http.server, json, os, glob, re, sqlite3, tempfile, pathlib
+from datetime import datetime, timedelta, timezone
 
 HD = os.path.expanduser(os.environ.get("HANDOFF_DIR", "~/.openclaw/workspace/shared/cc-handoff"))
 DB_PATH = os.environ.get("HANDOFF_DB", os.path.join(HD, "handoff.db"))
@@ -68,6 +68,7 @@ def list_md(dirname):
         to_field = ""
         from_field = ""
         tokens = ""
+        by_override = ""
         try:
             with open(f) as fh:
                 all_lines = fh.readlines()
@@ -140,14 +141,55 @@ def render():
     inbox = list_md("INBOX")
     ip = list_md("IN_PROGRESS")
     done = list_md("DONE")
-    cc_st, _ = read_hb(os.path.join(HD, "STATE", "cc.heartbeat"))
-    oc_st, _ = read_hb(os.path.join(HD, "STATE", "openclaw.heartbeat"))
-    now = datetime.now().strftime("%H:%M")
+    now_aware = datetime.now(timezone.utc).astimezone()
+    now = now_aware.strftime("%H:%M")
     done_show = done[-8:][::-1]
+
+    # 动态扫描所有心跳文件
+    hb_dir = os.path.join(HD, "STATE")
+    # 节点名映射：从 nodes.json 读取
+    NODE_NAMES = {}
+    try:
+        import json as _j
+        npath = os.path.join(HD, "nodes.json")
+        with open(npath) as _f:
+            reg = _j.load(_f)
+        for n in reg.get("nodes", []):
+            nid = n["id"]
+            disp = n.get("display", nid)
+            NODE_NAMES[nid] = disp
+            for a in n.get("aliases", []):
+                NODE_NAMES[a] = disp
+    except Exception:
+        pass
+    nodes_html = ""
+    for hb_path in sorted(glob.glob(os.path.join(hb_dir, "*.heartbeat"))):
+        name = os.path.basename(hb_path).replace(".heartbeat", "")
+        status, last_seen = read_hb(hb_path)
+        # 使用映射表中的展示名，找不到则用文件名
+        display = NODE_NAMES.get(name, name)
+        stale = False
+        if last_seen:
+            try:
+                last = datetime.fromisoformat(last_seen)
+                if (now_aware - last).total_seconds() > 300:
+                    stale = True
+            except Exception:
+                pass
+        if status == "alive" and not stale:
+            css = "alive"
+            label = "alive"
+        elif status == "alive" and stale:
+            css = "busy"
+            label = "STALE"
+        else:
+            css = "offline"
+            label = "offline"
+        nodes_html += f'<span><span class="dt {css}"></span><span class="sl">{display}</span><span class="{css}">{label}</span></span>'
+
     page = open(TPL_PATH).read()
     page = page.replace("{{NOW}}", now)
-    page = page.replace("{{OC_STAT}}", "alive" if oc_st == "online" else oc_st)
-    page = page.replace("{{CC_STAT}}", "alive" if cc_st == "online" else cc_st)
+    page = page.replace("{{NODES}}", nodes_html)
     page = page.replace("{{QCNT}}", str(len(inbox)))
     page = page.replace("{{IPCNT}}", str(len(ip)))
     page = page.replace("{{DONECNT}}", str(len(done)))
@@ -637,7 +679,46 @@ class Handler(http.server.BaseHTTPRequestHandler):
         pass
 
     def do_GET(self):
-        if self.path == "/":
+        if self.path == "/api/nodes":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            try:
+                npath = os.path.join(HD, "nodes.json")
+                with open(npath) as _f:
+                    reg = json.load(_f)
+                self.wfile.write(json.dumps(reg, ensure_ascii=False).encode())
+            except Exception:
+                self.wfile.write(b'{"nodes":[]}')
+        elif self.path == "/api/templates":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            # 扫描 shared/cc-handoff/ 下的模板文件
+            tpl_dir = pathlib.Path(HD)
+            templates = []
+            for f in sorted(tpl_dir.glob("*-template.md")):
+                name = f.stem.replace("-template", "")
+                content = f.read_text(encoding="utf-8")
+                # 从 frontmatter 提取 id 示例做简短说明
+                desc = ""
+                for line in content.split("\n"):
+                    if line.strip().startswith("# "):
+                        desc = line.strip("# ").strip()
+                        break
+                templates.append({
+                    "name": name,
+                    "file": f.name,
+                    "description": desc,
+                    "content": content
+                })
+            self.wfile.write(json.dumps({
+                "count": len(templates),
+                "templates": templates
+            }, ensure_ascii=False, indent=2).encode())
+        elif self.path == "/":
             if PROJECT:
                 project()  # 投影幂等；渲染前确保文件在同步（内容不变不重写）
             self.send_response(200)

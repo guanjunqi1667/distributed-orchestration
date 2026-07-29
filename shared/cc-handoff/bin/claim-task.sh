@@ -9,6 +9,7 @@
 set -uo pipefail
 WS="$HOME/.openclaw/workspace"; HD="$WS/shared/cc-handoff"
 . "$HD/bin/handoff-lock.sh"
+. "$HD/bin/validate-task.sh"  # 入站格式验证
 
 TID="${1:-}"
 [ -z "$TID" ] && { echo "usage: claim-task.sh <task-id>" >&2; exit 1; }
@@ -19,6 +20,19 @@ claim() {
   if [ ! -f "$src" ]; then
     echo "[claim] ⚠ $TID 不在 INBOX/（已被认领或不存在）" >&2; return 1
   fi
+
+  # 入站格式验证：不通过则退回 INBOX（不改文件，只拒绝认领）
+  if ! validate_file "$src" 2>/dev/null; then
+    local node_from
+    node_from=$(sed -n 's/^created_by:[[:space:]]*//p' "$src" 2>/dev/null | head -1 | sed 's/[[:space:]]*#.*//')
+    echo "[claim] ❌ $TID 格式不通过验证，拒绝认领（来自 $node_from）" >&2
+    echo "[claim]    理由：缺少必需 frontmatter 字段或章节" >&2
+    echo "[claim]    参考模板: shared/cc-handoff/task-template.md（完整任务）" >&2
+    echo "[claim]            shared/cc-handoff/note-template.md（短消息）" >&2
+    echo "[claim]    查看模板: cat shared/cc-handoff/README.md | grep -A2 '^|'" >&2
+    return 1
+  fi
+
   mv "$src" "$dst" || { echo "[claim] ⚠ mv 失败" >&2; return 1; }
   echo "[claim] $TID: INBOX → IN_PROGRESS"
   # 多节点：在 frontmatter 记录认领节点/时间/状态（best-effort；仅当文件带 frontmatter，

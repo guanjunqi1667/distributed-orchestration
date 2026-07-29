@@ -22,7 +22,42 @@
                               └─────────┘ └─────────┘ └─────────┘
 ```
 
-## 二、Handoff 协议 V3
+## 二、模板规范（所有节点必须遵守）
+
+所有投递到 INBOX 的任务/消息必须使用以下模板格式，否则会被验证器拒绝认领。
+
+### 可用模板
+
+| 模板 | 文件 | 用途 | 必填字段 |
+|------|------|------|---------|
+| **完整任务** | `task-template.md` | 详细任务分配，含 Objective + 验收条件 | id, priority, status, created_by, created_at, node, ## Objective, ## Acceptance Criteria |
+| **短消息** | `note-template.md` | 快速通知/提问/确认，无需 DONE 回执 | id, type=note, created_by, created_at, node |
+| **完成报告** | `done-template.md` | 任务执行完毕的结果回传 | id, status=done, Summary, Changes, Verification, Acceptance Criteria |
+
+### 必填 frontmatter 字段（所有类型）
+
+```
+---
+id: {唯一ID}              # 命名规则: {PRIORITY}-{DATE}-{DESC} 或 NOTE-{DATE}-{DESC}
+type: task|note            # task=完整任务  note=短消息
+status: pending            # pending|in_progress|done|blocked|alert
+created_by: {节点标识}     # 发送方：guanj_oc / guanj_cc / threesky
+created_at: {ISO时间戳}    # 如 2026-07-29T20:55+02:00
+node: any                  # 目标节点：any / oc-main / cc-main / threesky
+---
+```
+
+### 查看模板
+
+```bash
+# 查看所有模板
+cat shared/cc-handoff/*.md | grep '^# '
+
+# 复制任务模板开始
+cp shared/cc-handoff/task-template.md INBOX/my-task.md
+```
+
+## 三、Handoff 协议 V3
 
 两种模式，参考 LC 合约格式。
 
@@ -164,55 +199,69 @@ python3 ~/handoff-server/handoff_client.py done <task-id> /dev/stdin <<< '{"summ
 
 ## 四、节点加入
 
-### 新节点流程
+### 节点注册表
+
+所有节点在 `shared/cc-handoff/nodes.json` 中注册，格式如下：
+
+```json
+{
+  "nodes": [
+    {"id": "节点ID", "display": "展示名", "aliases": ["别名1"], "type": "类型", "location": "本地|远程"}
+  ]
+}
+```
+
+| 字段 | 说明 |
+|------|------|
+| `id` | 节点唯一标识，也是心跳文件名 |
+| `display` | 看板展示名称 |
+| `aliases` | 旧名/别名，消息中 node 字段可用 |
+| `type` | openclaw / claude-code / server / codex |
+| `location` | local / remote |
+
+### 新节点接入流程
 
 ```
-1. 分配节点 ID（如 `<你的名字>_cc`）         ← 管理员
-2. SSH 到服务器                         ← 节点自己
-3. 设环境变量                           ← 节点自己
-4. 验证连通（pending + 看板）           ← 节点自己
-5. 首次 claim（自动注册到系统）          ← 节点自己
-6. 执行任务 → done                      ← 节点自己
+1. 管理员在 nodes.json 注册节点（ID + 展示名 + 别名）
+2. 节点获取 nodes.json（scp 或 API GET /api/nodes）
+3. 节点建立心跳：STATE/{节点ID}.heartbeat
+4. 节点通过 API 或 SSH 通信
+5. 看板自动识别新节点
 ```
 
-### SSH 连接
+### 通信方式
 
+**方式 A：API（推荐）**
 ```bash
-从服务器上跑，或在本机装 `ho` 客户端
+# 查看节点列表
+curl http://threesky:8377/api/nodes
+
+# 创建任务/消息
+curl -X POST http://threesky:8377/api/tasks \
+  -H "Content-Type: application/json" \
+  -d '{"id":"NOTE-{DATE}-{DESC}","priority":"P2","title":"标题","objective":"内容","node":"目标节点"}'
 ```
 
-### 环境变量
-
+**方式 B：SSH 直连（fallback）**
 ```bash
-export HANDOFF_SERVER=$HANDOFF_SERVER
-export HANDOFF_NODE_ID=<你的名字>_cc
-# 推荐加到 ~/.bashrc
+# 投递文件到 INBOX
+scp 任务.md guan@100.90.1.56:/home/guan/.openclaw/workspace/shared/cc-handoff/INBOX/
+
+# 写 notify flag
+echo "任务ID" >> /home/guan/.openclaw/workspace/shared/cc-handoff/STATE/notify.目标节点.flag
 ```
 
-### 工作空间
+### 消息模板
 
-```bash
-~/workspace/
-├── projects/agent-team-orchestration/   # 模板、specs、artifacts
-├── shared/cc-handoff/                   # handoff 协议文档
-├── scripts/handoff/                     # dispatch、daemon 脚本
-├── skills/                              # skill 定义
-└── plugins/harness-hooks/               # hooks 源码
-```
-
-### 日常循环
-
-```bash
-while true; do
-  python3 ~/workspace/shared/cc-handoff/bin/handoff_client.py claim $HANDOFF_NODE_ID
-  # 有任务则执行 → done
-  sleep 15
-done
-```
+- **完整任务**：`type: task`，需 Objective + Acceptance Criteria，完成后写 DONE 报告
+- **短消息**：`type: note`，1-3 行正文，无需 DONE 回执
+- **node 字段**：可直接写目标节点 ID 或别名（如 `oc-main` / `guanj_oc` 均可达 OpenClaw）
 
 ### 看板
 
-浏览器打开 `$HANDOFF_SERVER`
+浏览器打开 `http://threesky:8377/`（或本地 `http://localhost:8377/`）
+
+看板显示所有已注册节点的在线状态（🟢 alive / 🟡 STALE / 🔴 offline）。
 
 ---
 

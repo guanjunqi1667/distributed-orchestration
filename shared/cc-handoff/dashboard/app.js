@@ -4,11 +4,20 @@
 // per-6s description flicker is gone and any expanded card stays expanded.
 var H = '';   // 相对路径，自动适配当前访问地址
 var POLL_MS = 6000;
+var NODE_MAP = {};  // nodes.json 加载后的映射表
+
+// 从服务端加载节点注册表
+fetch(H+'/api/nodes').then(function(r){return r.json()}).then(function(d){
+  d.nodes.forEach(function(n){
+    NODE_MAP[n.id]=n.display;
+    (n.aliases||[]).forEach(function(a){NODE_MAP[a]=n.display});
+  });
+}).catch(function(){});
 
 // ── existing helpers (preserved verbatim) ──────────────────────────────────
 function ago(i){if(!i)return'--';var s=(Date.now()-new Date(i).getTime())/1000;return s<60?'刚刚':s<3600?Math.round(s/60)+'分':s<86400?Math.round(s/3600)+'小时':Math.round(s/86400)+'天'}
 function on(n){return n[0]=='P'&&n[1]=='0'?'p0':n[0]=='P'&&n[1]=='1'?'p1':'p2'}
-function a(n){if(!n)return'';return n}  // 直接用原始节点名
+function a(n){if(!n)return'';var raw=n.split(/[\s(]/)[0].toLowerCase();return NODE_MAP[raw]||n}
 function tc(el){el.classList.toggle('open')}
 
 // ── small render helpers ───────────────────────────────────────────────────
@@ -19,7 +28,7 @@ function splitToken(tk){if(!tk)return{val:'',note:''};var m=tk.match(/^([^（(]+
 function cardName(t,col){var s=esc(t.name.replace(/\.md$/,''));var tk=splitToken(t.tokens);if(tk.val)s+=' <span class="tk">'+esc(tk.val)+'</span>';return s}
 function pad(x){return(x<10?'0':'')+x}
 function clockStr(){var d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes())}
-// time row: relative time + optional assignee badge (assignee mapped via a())
+// time row: relative time + node name badge
 function tmHTML(t){var s='<span>'+ago(t.mtime)+'</span>';if(t.by)s+='<span class="by">'+esc(a(t.by))+'</span>';return s}
 // 描述 + token 括号内说明文字
 function descHTML(t){var s=esc(t.desc||'(无描述)');var tk=splitToken(t.tokens);if(tk.note)s+=' <span class="tk-note">——'+esc(tk.note)+'</span>';return s}
@@ -79,14 +88,11 @@ function renderCol(colId,items,emptyText){
 }
 
 function renderStatus(d){
-  document.getElementById('oc-lb').textContent=d.oc.status;
-  document.getElementById('cc-lb').textContent=d.cc.status;
-  document.getElementById('qbadge').textContent=d.inbox.length;
-  var dots=document.querySelectorAll('.sb .dt');   // [oc, cc]
-  var m={'online':'alive','busy':'busy','offline':'offline','unknown':'unknown'};
-  if(dots[0])dots[0].className="dt "+(m[d.oc.status]||"unknown");
-  if(dots[1])dots[1].className="dt "+(m[d.cc.status]||"unknown");
-  document.getElementById('clk').textContent=clockStr();
+  // 状态栏由服务端动态渲染（{{NODES}}），此处仅尝试验证队列计数
+  var badge=document.getElementById('qbadge');
+  if(badge)badge.textContent=d.inbox.length;
+  var clk=document.getElementById('clk');
+  if(clk)clk.textContent=clockStr();
 }
 
 // ── render + poll ──────────────────────────────────────────────────────────

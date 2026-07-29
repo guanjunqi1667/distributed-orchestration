@@ -1,68 +1,131 @@
-# Codex 远端节点加入指南
+# 新节点加入指南
 
-## 加入流程（首次）
+## 前提
 
-### 0. 前提
-- SSH 到服务器（用自己的账号）
-- 服务器上已有 `~/workspace/`（含项目文件、模板、specs）
-- Handoff Server 已在运行（`$HANDOFF_SERVER`）
+- 节点能访问 Threesky 服务器（SSH `guan@100.90.1.56`）
+- 管理员已在 `nodes.json` 注册节点
+- 节点已安装 `curl`、`ssh`、`scp`
 
-### 1. 分配节点 ID
-找管理员拿一个节点 ID，例如 `<你的名字>_cc`。
-节点 ID 用来在 claim 时标识身份，避免冲突。
+## 加入流程
 
-同时设置环境变量：
+### 1. 获取节点注册信息
+
 ```bash
-export HANDOFF_SERVER=$HANDOFF_SERVER
-export HANDOFF_NODE_ID=<你的名字>_cc
-```
-建议加到 `~/.bashrc` 或启动脚本。
+# 查看当前所有节点
+curl http://threesky:8377/api/nodes
 
-### 2. 验证连通
+# 获取 nodes.json（离线使用）
+scp guan@100.90.1.56:/home/guan/.openclaw/workspace/shared/cc-handoff/nodes.json .
+```
+
+### 2. 建立心跳
+
+心跳让看板识别你的在线状态：
+
 ```bash
-# 查询待处理任务
-python3 ~/workspace/shared/cc-handoff/bin/handoff_client.py pending
-
-# 看板
-curl $HANDOFF_SERVER/
+ssh guan@100.90.1.56 "cat > /home/guan/.openclaw/workspace/shared/cc-handoff/STATE/{你的节点ID}.heartbeat << HEOC
+{\"status\":\"alive\",\"working_on\":\"\",\"last_seen\":\"\$(date -Iseconds)\",\"session\":\"{你的节点ID}\"}
+HEOC"
 ```
 
-### 3. 测试认领
+心跳建议每分钟刷新一次，否则 5 分钟后标记为 STALE。
+
+### 3. 通信
+
+**方式 A：API（推荐）**
+
 ```bash
-# 认领一个任务（首次 claim 自动注册节点到系统）
-python3 ~/workspace/shared/cc-handoff/bin/handoff_client.py claim <你的名字>_cc
+# 查看待处理任务
+curl http://threesky:8377/api
+
+# 查看可用模板
+curl http://threesky:8377/api/templates | python3 -m json.tool
+
+# 认领任务
+curl -X POST http://threesky:8377/api/claim -H "Content-Type: application/json" -d '{"node_id":"{你的节点ID}"}'
+
+# 完成报告
+curl -X POST http://threesky:8377/api/tasks/{任务ID}/done -H "Content-Type: application/json" -d '{"summary":"完成内容","changes":["改动列表"]}'
 ```
-返回 `{"claimed": true, "task": {...}}` → 成功
-返回 `{"claimed": null}` → 队列为空，等新任务
 
-### 4. 执行任务
-认领成功后在 `~/workspace/` 下工作。模板参考：
-- Handoff V3：`projects/agent-team-orchestration/docs/handoff-protocol-v3.md`
-- 合约模板：`contracts/`（在服务器 `~/workspace/contracts/` 下，如未同步可从 git 仓库取）
+**方式 B：SSH 直连（fallback）**
 
-### 5. 报告完成
 ```bash
-python3 ~/workspace/shared/cc-handoff/bin/handoff_client.py done <任务ID> /dev/stdin << 'EOF'
-{
-  "summary": "完成了什么",
-  "changes": ["改了什么文件"],
-  "status": "success"
-}
-EOF
+# 查看 INBOX
+ssh guan@100.90.1.56 ls /home/guan/.openclaw/workspace/shared/cc-handoff/INBOX/
+
+# 投递消息
+scp 消息.md guan@100.90.1.56:/home/guan/.openclaw/workspace/shared/cc-handoff/INBOX/
+
+# 写通知 flag（消息投递后必须写）
+ssh guan@100.90.1.56 "echo '\$(date -Iseconds) {消息ID}' >> /home/guan/.openclaw/workspace/shared/cc-handoff/STATE/notify.{目标节点}.flag"
 ```
 
-## 日常循环
+### 4. 消息格式
 
+**短消息（note）**：快速通知/提问/确认，无需回执
+```yaml
+---
+id: NOTE-{DATE}-{DESC}
+type: note
+priority: P2
+status: pending
+created_by: {你的节点ID}
+created_at: {ISO时间戳}
+node: {目标节点ID}
+---
+
+# 标题
+
+正文 1-3 行
 ```
-1. claim → 有任务？→ 执行 → done → 回到 1
-            ↓ 无
-           等 15s
+
+**完整任务（task）**：需 Objective + Acceptance Criteria，完成后写 DONE
+```yaml
+---
+id: P2-{DATE}-{DESC}
+type: task
+priority: P2
+status: pending
+created_by: {你的节点ID}
+created_at: {ISO时间戳}
+node: {目标节点ID}
+---
+
+# 任务标题
+
+## Objective
+
+一句话目标
+
+## Acceptance Criteria
+
+- [ ] 验收条件
+```
+
+### 5. 日常循环
+
+```bash
+while true; do
+  # 查看是否有任务
+  curl -s http://threesky:8377/api | python3 -c "import sys,json;d=json.load(sys.stdin);print(f'待办: {len(d[\"inbox\"])}')"
+  
+  # 刷新心跳
+  # 有任务则认领→执行→完成
+  
+  sleep 30
+done
 ```
 
 ## 看板
-浏览器打开 `$HANDOFF_SERVER` 看队列状态和节点活跃情况。
 
-## 注意
-- 节点 ID 全局唯一，不要抢别人的
-- workspace 已包含完整项目文件，不需要额外 clone
-- 卡住就弃任务，不要挂起
+浏览器打开 `http://threesky:8377/` 或本地 `http://localhost:8377/`
+
+看板显示所有节点状态（🟢 alive / 🟡 STALE / 🔴 offline）和三列任务队列。
+
+## 注意事项
+
+- `node` 字段写目标节点 ID 或别名皆可
+- 心跳必须定期刷新（>5min 不刷新标记 STALE）
+- 投递消息后必须写 `notify.{目标}.flag`
+- 模板可从 `GET /api/templates` 获取

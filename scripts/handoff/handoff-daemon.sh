@@ -1,12 +1,18 @@
 #!/usr/bin/env bash
 # ── Handoff Daemon — 对称多节点守护 ──
 # 职责：heartbeat + INBOX 扫描 + 自动认领（node=self 或 any）+ DONE/ALERT 通知
-# 设计原则：所有节点对称，无中心。通过 LOCAL_NODE 可配，cron 部署到任意节点。
 #
-# cron 示例（oc-main 节点）：
-#   */3 * * * * /path/to/handoff-daemon.sh >> /tmp/handoff-daemon.log 2>&1
-# cron 示例（cc-main 节点）：
-#   HANDOFF_NODE=cc-main */3 * * * * /path/to/handoff-daemon.sh >> /tmp/handoff-daemon.log 2>&1
+# ## 模式
+# - 纯 cron（默认）：每个 tick 做完整扫描后退房。cron */3 * * * * 部署。
+# - 混合模式（HANDOFF_HYBRID=1）：cron tick 完成后，后台启动 Python 文件监听器
+#   （2s stat 轮询），即时响应 INBOX/DONE/ALERT 变更。cron 仍负责心跳 + stale 检测。
+#
+# ## cron 示例
+#   纯 cron:    */3 * * * * /path/handoff-daemon.sh >> /tmp/handoff-daemon.log 2>&1
+#   混合模式:   */3 * * * * HANDOFF_HYBRID=1 /path/handoff-daemon.sh >> /tmp/handoff-daemon.log 2>&1
+#   cc 节点:    HANDOFF_NODE=cc-main */3 * * * * /path/handoff-daemon.sh >> /tmp/handoff-daemon.log 2>&1
+#
+# 设计原则：所有节点对称，无中心。通过 LOCAL_NODE 可配，cron 部署到任意节点。
 set -euo pipefail
 
 WS="${HOME}/.openclaw/workspace"
@@ -20,6 +26,10 @@ ARCHIVE_DIR="${HD}/INBOX_ARCHIVE"
 FLAG_DIR="${HD}/STATE"
 NOTIFY_FLAG="${FLAG_DIR}/notify.flag"
 HANDOFF_STATE_DIR="${WS}/.state"
+
+# ── 混合模式配置 ──
+HANDOFF_HYBRID="${HANDOFF_HYBRID:-}"
+HANDOFF_WATCH_PID="${HANDOFF_WATCH_PID_FILE:-/tmp/handoff-watch-${LOCAL_NODE:-oc-main}.pid}"
 
 # ── 节点身份（可配，默认 oc-main 向后兼容） ──
 LOCAL_NODE="${HANDOFF_NODE:-oc-main}"
@@ -70,8 +80,14 @@ if [ -d "$INBOX_DIR" ]; then
         elif [ "$tn" = "oc" ] && [ "$LOCAL_NODE" = "oc-main" ]; then
             # 旧名兼容：oc = oc-main
             for_me="$for_me $task_name"
+        elif [ "$tn" = "guanj_oc" ] && [ "$LOCAL_NODE" = "oc-main" ]; then
+            # 别名：guanj_oc = oc-main
+            for_me="$for_me $task_name"
         elif [ "$tn" = "cc" ] && [ "$LOCAL_NODE" = "cc-main" ]; then
             # 旧名兼容：cc = cc-main
+            for_me="$for_me $task_name"
+        elif [ "$tn" = "guanj_cc" ] && [ "$LOCAL_NODE" = "cc-main" ]; then
+            # 别名：guanj_cc = cc-main
             for_me="$for_me $task_name"
         else
             # node 指向别人 → 不认领，但记录我投递的（通知用）
@@ -215,6 +231,26 @@ done
 if [ -f "${STATE_DIR}/cc.notify.flag" ] && [ "${LOCAL_NODE}" = "oc-main" ]; then
     echo "[${LOCAL_NODE}-daemon] CC 旧格式通知标记存在"
     rm -f "${STATE_DIR}/cc.notify.flag"
+fi
+
+# ── 7. 混合模式：后台启动文件监听器（if HANDOFF_HYBRID=1） ──
+# 仅当 cron tick 完成且「监听器不在运行」时才启动
+if [ -n "$HANDOFF_HYBRID" ]; then
+  if [ -f "$HANDOFF_WATCH_PID" ] && kill -0 "$(cat "$HANDOFF_WATCH_PID")" 2>/dev/null; then
+    :  # 监听器已在运行，不重复启动
+  else
+    WATCH_SCRIPT="${WS}/scripts/handoff/handoff-watch.py"
+    if [ -f "$WATCH_SCRIPT" ]; then
+      # 启动 Python 监听器（后台，被 cron 下次 tick 杀死也没事——会重新拉起）
+      nohup python3 "$WATCH_SCRIPT" --interval 2 \
+        >> /tmp/handoff-watch-${LOCAL_NODE}.log 2>&1 &
+      WATCH_PID=$!
+      echo "$WATCH_PID" > "$HANDOFF_WATCH_PID"
+      echo "[${LOCAL_NODE}-daemon] 🔄 混合模式监听器已启动 (PID=$WATCH_PID)"
+    else
+      echo "[${LOCAL_NODE}-daemon] ⚠ 混合模式启用但 $WATCH_SCRIPT 不存在" >&2
+    fi
+  fi
 fi
 
 exit 0

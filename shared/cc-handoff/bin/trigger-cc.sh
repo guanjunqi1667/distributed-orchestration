@@ -57,13 +57,9 @@ if [ "$STORE" = "dual" ] || [ "$STORE" = "db" ]; then
 try: print((json.load(sys.stdin).get('task') or {}).get('id',''))
 except Exception: print('')" 2>/dev/null)"
 
-  if [ -z "$TID" ]; then
-    echo "无待办任务（/api/claim 返回空），不拉起 CC。"
-    exit 0
-  fi
-
-  echo "[trigger] 认领任务 $TID（HANDOFF_STORE=$STORE），拉起 CC 处理。"
-  exec claude -p "任务 ${TID} 已由 handoff-server 原子认领给你（reserve-before-execute：POST /api/claim 在服务器事务内串行化，天然互斥，无并发输家）。
+  if [ -n "$TID" ]; then
+    echo "[trigger] 认领任务 $TID（HANDOFF_STORE=$STORE），拉起 CC 处理。"
+    exec claude -p "任务 ${TID} 已由 handoff-server 原子认领给你（reserve-before-execute：POST /api/claim 在服务器事务内串行化，天然互斥，无并发输家）。
 
 读取任务详情（任选其一）：
 - python3 shared/cc-handoff/bin/handoff_client.py get ${TID}
@@ -77,7 +73,9 @@ except Exception: print('')" 2>/dev/null)"
 3. 执行 shared/cc-handoff/bin/notify-openclaw.sh ${TID}  通知 OpenClaw 收件（写 STATE/notify.guanj_oc.flag，过渡期兼容写 cc.notify.flag，纯文件驱动，无 deliver）。
 
 不要手动 mv 任务文件、不要直接写 INBOX/IN_PROGRESS/DONE 目录（这些是服务器单向投影出来的）。无 stdin 时 task-done.sh 也可从 stdin 读报告。" --max-turns "$MAX_TURNS"
-  exit 0
+    exit 0
+  fi
+  echo "[trigger] server 无待办（/api/claim 空），dual fallback 本地 files 分支扫 INBOX"
 fi
 
 # ════════════════════════════════════════════════════════════════════

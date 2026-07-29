@@ -17,6 +17,7 @@
 set -uo pipefail
 WS="$HOME/.openclaw/workspace"; HD="$WS/shared/cc-handoff"
 STATE="$HD/STATE"; HB="$STATE/cc.heartbeat"; INBOX="$HD/INBOX"
+HANDOFF_SERVER="${HANDOFF_SERVER:-http://100.90.1.56:8377}"   # dual: server 端(db)
 TRIGGER="$HD/bin/trigger-cc.sh"
 LOCAL_NODE="${CC_NODE:-cc-main}"          # 本节点 id（多节点路由用；见 STATE/nodes/）
 . "$HD/bin/handoff-lock.sh"
@@ -71,11 +72,18 @@ if cc_busy; then cc_hb="alive"; cc_busy_now=true; fi
 echo "[cc-daemon] $(date +%H:%M:%S)  inbox=${inbox_n} inprog=${inprog_n} done=${done_n} alert=${alert_n}  CC=${cc_hb}"
 [ -n "${inbox_ids# }" ] && echo "[cc-daemon] 待办:${inbox_ids}"
 
-# ── 有活且 CC 不在跑 → 异步拉起（不阻塞 cron tick）──
-if [ "$inbox_n" -gt 0 ] && [ "$cc_busy_now" = false ]; then
+# ── dual: server 端 pending 检查(db)──
+SERVER_N=0
+if [ -n "${HANDOFF_SERVER:-}" ]; then
+  SERVER_N=$(python3 -c "import urllib.request,json; r=urllib.request.urlopen('${HANDOFF_SERVER}/api/tasks/pending',timeout=5); print(json.loads(r.read()).get('count',0))" 2>/dev/null || echo 0)
+  [ "$SERVER_N" -gt 0 ] && echo "[cc-daemon] server pending: ${SERVER_N}"
+fi
+
+# ── 有活(本地 OR server)且 CC 不在跑 → 异步拉起（dual: trigger 走 STORE=dual claim 两端）──
+if { [ "$inbox_n" -gt 0 ] || [ "$SERVER_N" -gt 0 ]; } && [ "$cc_busy_now" = false ]; then
   if [ -x "$TRIGGER" ]; then
-    echo "[cc-daemon] INBOX 有 ${inbox_n} 个待办且 CC 离线，异步拉起..."
-    nohup "$TRIGGER" >/tmp/cc-daemon-trigger.log 2>&1 &
+    echo "[cc-daemon] 待办(本地 ${inbox_n} + server ${SERVER_N})且 CC 离线，异步拉起..."
+    HANDOFF_STORE="${HANDOFF_STORE:-dual}" nohup "$TRIGGER" >/tmp/cc-daemon-trigger.log 2>&1 &
   else
     echo "[cc-daemon] ⚠ trigger-cc.sh 不可用，任务留 INBOX 等下次" >&2
   fi
