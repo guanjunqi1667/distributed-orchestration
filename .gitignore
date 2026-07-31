@@ -64,3 +64,14 @@ projects/**/server.log
 
 # Archived handoff tasks (may contain internal paths)
 shared/cc-handoff/INBOX_ARCHIVE/*.md
+TOOLS.md
+
+# Internal tooling - may contain server IPs / internal paths
+scripts/handoff/threesky-sync.sh
+shared/cc-handoff/bin/threesky-sync.sh
+shared/cc-handoff/docs/threesky-sync.md
+
+# Out-of-scope workspace dirs (handoff repo should only track shared/cc-handoff + scripts/handoff)
+plugins/
+memory/lessons/
+skills/
