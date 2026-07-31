@@ -75,3 +75,18 @@ shared/cc-handoff/docs/threesky-sync.md
 plugins/
 memory/lessons/
 skills/
+
+# ═══════════════════════════════════════════════════════
+# 白名单模式（2026-07-31）：仓库根在 workspace，但只允许
+# handoff 项目内容进入 git。git add -A 永远不会扫进其他目录。
+# ═══════════════════════════════════════════════════════
+/*
+!/shared/
+!/scripts/
+!/README.md
+!/LICENSE
+!/.gitignore
+/shared/*
+!/shared/cc-handoff/
+/scripts/*
+!/scripts/handoff/
